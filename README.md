@@ -4,6 +4,7 @@ The scripts also allow to format cards in an appropriate format for MakePlayingC
 
 ## downloadCubeImages
 Given a .csv export from CubeCobra downloads all card images. Official images are downloaded from Scryfall in the correct version. Custom Images are downloaded via the image url given in the csv, if they are tagged with "custom".
+You need to create a "custom" and a "official" folder before using.
 
 Example:
 ```
