@@ -14,18 +14,20 @@ csv_reader = csv.reader(open(sys.argv[1], "r"), delimiter=',')
 custom_tag = "custom"
 custom_cards = {}
 card_downloaded = 0
+errors = []
 for row in csv_reader:
     c_name= row[0]
     if c_name != "name":
         # skip first line
         c_name = c_name.replace("/", "-")
         c_name = c_name.replace("\\", "-")
+        c_name = c_name.replace(":", "")
         c_set= row[4]
         c_set_nr= row[5]
         c_set_nr= c_set_nr.replace("★", "")
-        maybeboard = row[10]
-        image_url = row[11]
-        tags = row[13]
+        maybeboard = row[11]
+        image_url = row[12]
+        tags = row[14]
         
         try:
             if maybeboard != "true":
@@ -45,41 +47,46 @@ for row in csv_reader:
                     print(f"{c_name} {c_set} {c_set_nr}")
                     r = requests.get(f"https://api.scryfall.com/cards/{c_set}/{c_set_nr}", headers=headers_scryfall)
                     print(r.status_code)
-                    scryfall_card = loads(r.text)
-                    if not "image_uris" in scryfall_card:
-                        if "image_uris" in scryfall_card["card_faces"][0]:
-                            # double sided
-                            img_url = scryfall_card["card_faces"][0]['image_uris']['png']
-                            r = requests.get(img_url, headers=headers_scryfall)
-                            
-                            path = Path("doublesided") / f"Front_{c_name}.png"
-                            f = open(path, "wb")
-                            f.write(r.content)
-                            print(f"Official: Created {path}")
-                            f.close()
-                            
-                            img_url = scryfall_card["card_faces"][1]['image_uris']['png']
-                            r = requests.get(img_url, headers=headers_scryfall)
-                            
-                            path = Path("doublesided") / f"Back_{c_name}.png"
-                            f = open(path, "wb")
-                            f.write(r.content)
-                            print(f"Official: Created {path}")
-                            f.close()
+                    if r.status_code == 200:
+                        scryfall_card = loads(r.text)
+                        if not "image_uris" in scryfall_card:
+                            if "image_uris" in scryfall_card["card_faces"][0]:
+                                # double sided
+                                img_url = scryfall_card["card_faces"][0]['image_uris']['png']
+                                r = requests.get(img_url, headers=headers_scryfall)
+                                
+                                path = Path("doublesided") / f"Front_{c_name}.png"
+                                f = open(path, "wb")
+                                f.write(r.content)
+                                print(f"Official: Created {path}")
+                                f.close()
+                                
+                                img_url = scryfall_card["card_faces"][1]['image_uris']['png']
+                                r = requests.get(img_url, headers=headers_scryfall)
+                                
+                                path = Path("doublesided") / f"Back_{c_name}.png"
+                                f = open(path, "wb")
+                                f.write(r.content)
+                                print(f"Official: Created {path}")
+                                f.close()
+                            else:
+                                raise("ERROR: No Image found on Scyfall")
                         else:
-                            raise("ERROR: No Image found on Scyfall")
+                            img_url = scryfall_card['image_uris']['png']
+                            #print(scryfall_card)
+                            r = requests.get(img_url, headers=headers_scryfall)
+                            
+                            path = Path("official") / f"{c_name}.png"
+                            if path.is_file():
+                                path = Path("official") / f"Duplicate_{c_name}.png"
+                            f = open(path, "wb")
+                            f.write(r.content)
+                            print(f"Official: Created {path}")
+                            f.close()
                     else:
-                        img_url = scryfall_card['image_uris']['png']
-                        #print(scryfall_card)
-                        r = requests.get(img_url, headers=headers_scryfall)
-                        
-                        path = Path("official") / f"{c_name}.png"
-                        if path.is_file():
-                            path = Path("official") / f"Duplicate_{c_name}.png"
-                        f = open(path, "wb")
-                        f.write(r.content)
-                        print(f"Official: Created {path}")
-                        f.close()
+                        m = f"Error {r.status_code} with {c_name} {c_set} {c_set_nr}"
+                        errors.append(m)
+                        print(f"Error {r.status_code} with {c_name} {c_set} {c_set_nr}")
                 card_downloaded += 1
                 print()
         except Exception as e:
@@ -92,3 +99,7 @@ for row in csv_reader:
 # Get the image URL
 
 print(f"Downloaded {card_downloaded} cards.")
+
+print(f"Errors:")
+for l in errors:
+    print(l)

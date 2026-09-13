@@ -2,6 +2,15 @@
 This is a collection of scripts that can be used to download images from a cube on CubeCobra, including custom images.
 The scripts also allow to format cards in an appropriate format for MakePlayingCards.
 
+Order of doing things:
+- Export .csv from CubeCobra
+- downloadCubeImages
+- resizeImages center_extent official
+- resizeImages center_extent doublesided
+- resizeImages scale custom
+- resizeImages crop custom
+- resizeImages center_extent custom
+
 ## downloadCubeImages
 Given a .csv export from CubeCobra downloads all card images. Official images are downloaded from Scryfall in the correct version. Custom Images are downloaded via the image url given in the csv, if they are tagged with "custom".
 You need to create a "custom" and a "official" folder before using.
